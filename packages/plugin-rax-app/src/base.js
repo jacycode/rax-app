@@ -11,6 +11,7 @@ module.exports = (api, { target, babelConfigOptions, progressOptions = {}, isNod
   const { rootDir, command, userConfig } = context;
 
   const mode = command === 'start' ? 'development' : 'production';
+  const { swc } = userConfig;
   const babelConfig = getBabelConfig(babelConfigOptions);
   const webpackConfig = getWebpackConfig({
     rootDir,
@@ -35,15 +36,17 @@ module.exports = (api, { target, babelConfigOptions, progressOptions = {}, isNod
     enhancedWebpackConfig.plugin('CopyWebpackPlugin').use(CopyWebpackPlugin, [[]]);
   }
 
-  ['jsx', 'tsx'].forEach((ruleName) => {
-    enhancedWebpackConfig.module
-      .rule(ruleName)
-      .use('platform-loader')
-      .loader(require.resolve('rax-platform-loader'))
-      .options({
-        platform: target === 'ssr' || isNode ? 'node' : target,
-      });
-  });
+  if (!swc) {
+    ['jsx', 'tsx'].forEach((ruleName) => {
+      enhancedWebpackConfig.module
+        .rule(ruleName)
+        .use('platform-loader')
+        .loader(require.resolve('rax-platform-loader'))
+        .options({
+          platform: target === 'ssr' || isNode ? 'node' : target,
+        });
+    });
+  }
 
   onGetWebpackConfig(target, (config) => {
     // Set public url after developer has set public path
